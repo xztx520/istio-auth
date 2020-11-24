@@ -1,0 +1,21 @@
+apiVersion: "authentication.istio.io/v1alpha1"
+kind: "Policy"
+metadata:
+  name: "jwt-policy"
+  namespace: bgyy
+spec:
+  targets:
+    - name: hello
+  origins:
+    - jwt:
+        issuer: "csse"
+        jwksUri: "http://platform-auth.platform.svc.cluster.local:20002/auth/token_keys"
+        triggerRules:
+          - excludedPaths:
+              - exact: /health
+  #        fromParams:
+  #          - "my_token"
+  principalBinding: USE_ORIGIN
+---
+
+

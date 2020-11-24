@@ -1,0 +1,60 @@
+plugins {
+    id 'org.springframework.boot' version '2.1.7.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+    id 'java'
+}
+
+group = 'com.csse'
+//version = '0.0.0.1'
+sourceCompatibility = '1.8'
+
+bootJar {
+    baseName = 'platform-auth'
+}
+
+repositories {
+    //maven { url 'http://maven.aliyun.com/nexus/content/groups/public' }
+    maven{ url 'http://192.168.17.168:11021/repository/maven-public/'}
+}
+configurations {
+    compile.exclude module: 'spring-boot-starter-logging'
+    compile.exclude module: 'spring-boot-starter-tomcat'
+}
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+    implementation 'org.springframework.boot:spring-boot-starter-undertow'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    compile group: 'org.apache.commons', name: 'commons-pool2', version: '2.6.2'
+
+    implementation 'org.bitbucket.b_c:jose4j:0.6.5'
+    implementation 'io.jsonwebtoken:jjwt:0.7.0'
+    implementation 'joda-time:joda-time'
+    
+    compile group: 'com.alibaba', name: 'fastjson', version: '1.2.71'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    compile group: 'com.csse', name: 'csse.common', version: '0.0.9'
+    //数据库配置
+    compile group: 'com.alibaba', name: 'druid', version: '1.1.20'
+    compile('com.dameng:Dm7JdbcDriver17:7.6.0.77')
+    compile group: 'com.baomidou', name: 'mybatis-plus-boot-starter', version: '3.3.0'
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.9'
+    // nacos
+    compile group: 'com.alibaba.cloud', name: 'spring-cloud-starter-alibaba-nacos-config', version: '2.1.0.RELEASE'
+    compile group: 'com.alibaba.cloud', name: 'spring-cloud-starter-alibaba-nacos-discovery', version: '2.1.0.RELEASE'
+    compile group: 'com.alibaba.nacos', name: 'nacos-client', version: '1.2.1'
+
+    compile group: 'io.springfox', name: 'springfox-swagger2', version: '2.6.1'
+    compile group: 'io.springfox', name: 'springfox-swagger-ui', version: '2.6.1'
+    compile group: 'com.github.xiaoymin', name: 'swagger-bootstrap-ui', version: '1.9.3'
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+    testImplementation 'io.projectreactor:reactor-test'
+}
+
+test {
+    useJUnitPlatform()
+}

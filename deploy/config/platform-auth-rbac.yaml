@@ -1,0 +1,12 @@
+apiVersion: "rbac.istio.io/v1alpha1"
+kind: ClusterRbacConfig
+metadata:
+  name: default
+  namespace: bgyy
+spec:
+  mode: 'ON_WITH_INCLUSION'
+  inclusion:
+    services:
+      - "w.platform.svc.cluster.local"
+---
+

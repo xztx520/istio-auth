@@ -1,0 +1,12 @@
+spring:
+  cloud:
+    nacos:
+      config:
+        server-addr: 192.168.17.154:8848
+        namespace: f0753ddb-7f69-4b8a-ac15-605b436d1879
+        name: platform-auth
+        file-extension: yml
+        shared-dataids: basic.yaml
+      discovery:
+        server-addr: 192.168.17.154:8848
+        namespace: f0753ddb-7f69-4b8a-ac15-605b436d1879

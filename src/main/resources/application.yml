@@ -1,0 +1,64 @@
+#server:
+#  port: 20002
+#spring:
+#  application:
+#    name: platform-auth
+#  cloud:
+#    nacos:
+#      config:
+#        server-addr: nacos-headless.platform.svc.cluster.local:8848
+#        namespace: f0753ddb-7f69-4b8a-ac15-605b436d1879
+#        name: platform-auth
+#        file-extension: yml
+#        shared-dataids: basic.yaml
+#      discovery:
+#        server-addr: nacos-headless.platform.svc.cluster.local:8848
+#        namespace: f0753ddb-7f69-4b8a-ac15-605b436d1879
+#  redis:
+#    password:
+#    timeout: 60000ms
+#    # host: 192.168.17.154
+#    cluster:
+#      nodes: ${redis.cluster.nodes}
+#    #       max-redirects: 3
+#    lettuce:
+#      pool:
+#        max-active: -1
+#        max-wait: -1
+#        max-idle: 10
+#        min-idle: 5
+#  datasource:
+#    driver-class-name: dm.jdbc.driver.DmDriver
+#    url: jdbc:dm://${dm.ip}/PLATFORM_BASIC
+#    username: PLATFORM_BASIC
+#    password: 123456789
+#  druid:
+#    connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+#    filters: stat
+#    initialSize: 5
+#    maxActive: 1000
+#    maxPoolPreparedStatementPerConnectionSize: 20
+#    maxWait: 60000
+#    minEvictableIdleTimeMillis: 300000
+#    minIdle: 5
+#    poolPreparedStatements: false
+#    testOnBorrow: false
+#    testOnReturn: false
+#    testWhileIdle: true
+#    timeBetweenEvictionRunsMillis: 60000
+#    validationQuery: SELECT 1 from DUAL
+#mybatis-plus:
+#  configuration:
+#    cache-enabled: true
+#    map-underscore-to-camel-case: true
+#  global-config:
+#    db-config:
+#      db-type: mysql
+#      field-strategy: not_empty
+#      id-type: auto
+#      table-underline: true
+#    refresh: true
+#  mapper-locations: classpath:mapper/*.xml
+#  typeAliasesPackage: com.csse.auth.entity
+#client:
+#  expire: 14400

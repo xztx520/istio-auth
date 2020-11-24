@@ -1,0 +1,88 @@
+variables:
+  BASEIMAGE: kylincloud2.hub/kube-system/openjdk:8u212-jdk-slim
+  PROJECT_NAME: platform-auth
+  HARBOR_PROJECT_NAME: platform
+  HTTP_PORT: 20002
+#  GRPC_PORT: 22001
+  DEPLOYFILE_NAME: platform-auth.yaml
+
+stages:
+  - clean_build_jar
+  - create_dockerfile
+  - build_image
+  - deploy
+
+clean_build_job:
+  tags:
+    - platform2.0-build
+  only:
+    - triggers
+#      - tags      # tag 分支 commit 之后触发
+#      - triggers  # API 触发
+#      - schedules # 每日构建触发
+  stage: clean_build_jar
+  script:
+    - gradle clean
+    - gradle build
+  artifacts:
+    paths:
+      - build/libs/
+      - deploy/
+
+create_dockerfile:
+  tags:
+    - platform2.0-docker
+  only:
+    - triggers
+  stage: create_dockerfile
+  dependencies:
+    - clean_build_job
+  script:
+    - echo "FROM $BASEIMAGE" > deploy/Dockerfile
+    - echo "RUN mkdir /platform" >> deploy/Dockerfile
+    - echo "COPY $PROJECT_NAME.jar /platform/$PROJECT_NAME.jar" >> deploy/Dockerfile
+    - echo "RUN chmod a+x /platform/$PROJECT_NAME.jar" >> deploy/Dockerfile
+    #    - echo "COPY application.yml /" >> docker/Dockerfile
+    - echo "COPY localtime /etc/" >> deploy/Dockerfile
+#    - echo "ADD skywalking.tar.gz /platform" >> deploy/Dockerfile
+    - echo "EXPOSE $HTTP_PORT" >> deploy/Dockerfile
+#    - echo "EXPOSE $GRPC_PORT" >> deploy/Dockerfile
+    - echo "WORKDIR /platform" >> deploy/Dockerfile
+    - echo "CMD [\"java\", \"-Duser.timezone=GMT+8\", \"-Xmx2048M\", \"-Xms2048M\", \"-jar\", \"/platform/$PROJECT_NAME.jar\"]" >> deploy/Dockerfile
+    - cp build/libs/*.jar deploy/
+    - cp /etc/localtime deploy/
+  #    - cp src/main/resources/application.yml docker/
+  artifacts:
+    paths:
+      - deploy/
+
+docker_build:
+  stage: build_image
+  only:
+    - triggers
+  tags:
+    - platform2.0-docker
+  dependencies:
+    - create_dockerfile
+  script:
+    - cd deploy
+    - cat Dockerfile
+    - docker login kylincloud2.hub -u admin -p Harbor12345
+    - docker build -t kylincloud2.hub/$HARBOR_PROJECT_NAME/$PROJECT_NAME:$platform_vsersion-ft1500-arm64 .
+    - docker push kylincloud2.hub/$HARBOR_PROJECT_NAME/$PROJECT_NAME:$platform_vsersion-ft1500-arm64
+
+deploy:
+  only:
+    - triggers
+  stage: deploy
+  tags:
+    - platform2.0-docker
+  script:
+    - cd deploy
+    - sed -i "s@IMAGE_NAME@kylincloud2.hub/$HARBOR_PROJECT_NAME/$PROJECT_NAME:$platform_vsersion-ft1500-arm64@g" $DEPLOYFILE_NAME
+#    - sed -i "s@JARFILE@$PROJECT_NAME-$VERSION.jar@g" $DEPLOYFILE_NAME
+    - kubectl apply -f $DEPLOYFILE_NAME
+    - if [ $operation_type = publish ] ; then  docker save kylincloud2.hub/$HARBOR_PROJECT_NAME/$PROJECT_NAME:$platform_vsersion-ft1500-arm64 > /kylincloud2_2.0_ft1500_arm64_$platform_vsersion_$PROJECT_NAME.tar; sshpass -p 123123 scp -P 22 /kylincloud2_2.0_ft1500_arm64_$platform_vsersion_$PROJECT_NAME.tar root@$kodexplorer_address/$platform_process_version/$PROJECT_NAME-$platform_vsersion/ ; rm /kylincloud2_2.0_ft1500_arm64_$platform_vsersion_$PROJECT_NAME.tar; else echo ingnoring; fi
+    - if [ $operation_type = publish ] ; then sshpass -p 123123 scp -r -P 22 config root@$kodexplorer_address/$platform_process_version/$PROJECT_NAME-$platform_vsersion/ ; else echo ingnoring; fi
+    - if [ $operation_type = publish ] ; then sshpass -p 123123 scp -r -P 22 $DEPLOYFILE_NAME root@$kodexplorer_address/$platform_process_version/$PROJECT_NAME-$platform_vsersion/deploy ; else echo ingnoring; fi
+#    - if [ 0=0 ] ; then echo 111 ;echo 123; else echo 222; fi

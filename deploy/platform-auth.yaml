@@ -1,0 +1,143 @@
+##################################################################################################
+# platform-istio service
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-auth
+  namespace: platform
+  labels:
+    app: platform-auth
+    service: platform-auth
+spec:
+  ports:
+    - port: 20002
+      name: http
+  selector:
+    app: platform-auth
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-auth
+  namespace: platform
+  labels:
+    app: platform-auth
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: platform-auth
+      version: v1
+  template:
+    metadata:
+      namespace: platform
+      annotations:
+        sidecar.istio.io/inject: 'true'
+      labels:
+        app: platform-auth
+        version: v1
+    spec:
+      imagePullSecrets:
+        - name: myregistrykey
+      restartPolicy: Always
+      containers:
+        - name: platform-auth
+          image: IMAGE_NAME
+          imagePullPolicy: IfNotPresent
+#          command: ["java","-jar","/csse-platform-auth-0.0.0.1.jar"]
+          ports:
+            - containerPort: 20002
+              name: http
+          readinessProbe:
+            httpGet:
+              path: "/actuator/health"
+              scheme: HTTP
+              port: 20002
+            initialDelaySeconds: 120
+            periodSeconds: 10
+            timeoutSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: "/actuator/health"
+              scheme: HTTP
+              port: 20002
+            initialDelaySeconds: 120
+            periodSeconds: 10
+            timeoutSeconds: 10
+          resources:
+            limits:
+              cpu: 2000m
+              memory: '4096M'
+            requests:
+              memory: '4096M'
+              cpu: 2000m
+          volumeMounts:
+            - mountPath: "/opt/config"
+              name: volume-1
+              readOnly: true
+#            - mountPath: "/bootstrap.yml"
+#              name: volume-2
+#              readOnly: false
+          securityContext:
+            privileged: false
+      nodeSelector:
+        node-role.kubernetes.io/node: 'true'
+      volumes:
+        - hostPath:
+            path: "/root/.kube/config"
+            type: File
+          name: volume-1
+#        - hostPath:
+#            path: "/nas/platform2.0/platform-auth/config/bootstrap.yml"
+#            type: File
+#          name: volume-2
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: platform-auth-gw
+  namespace: platform
+spec:
+  selector:
+    istio: ingressgateway # use istio default controller
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "platform-auth.csse.cn"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: platform-auth-vs
+  namespace: platform
+spec:
+  hosts:
+    - "platform-auth.csse.cn"
+  gateways:
+    - platform-auth-gw
+  http:
+    - corsPolicy:
+        allowCredentials: true
+        allowHeaders:
+          - '*'
+        allowMethods:
+          - GET
+          - POST
+        allowOrigin:
+          - '*'
+        maxAge: 24h
+      match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: platform-auth.platform.svc.cluster.local
+            port:
+              number: 20002
+---
+
